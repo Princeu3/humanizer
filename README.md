@@ -59,8 +59,10 @@ Or, if you already have this repo cloned:
 
 ```bash
 mkdir -p /path/to/your/skills/humanizer
-cp SKILL.md /path/to/your/skills/humanizer/
+cp -R SKILL.md references /path/to/your/skills/humanizer/
 ```
+
+`references/` is optional at runtime, the skill loads it only when a rewrite needs the underlying numbers, but copying it keeps S1-S11 fully sourced.
 
 ## Usage
 
@@ -100,7 +102,13 @@ The skill will analyze your sentence rhythm, word choices, and quirks, then appl
 
 ## Overview
 
-Based on [Wikipedia's "Signs of AI writing"](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) guide, maintained by WikiProject AI Cleanup. This comprehensive guide comes from observations of thousands of instances of AI-generated text.
+The skill works on two layers.
+
+**Style** — 33 patterns from [Wikipedia's "Signs of AI writing"](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) guide, maintained by WikiProject AI Cleanup, drawn from observations of thousands of instances of AI-generated text.
+
+**Structure** — 11 rules from [StoryScope](https://arxiv.org/abs/2604.03136) (COLM 2026), which scored 61,608 stories from one human author and five models across 304 discourse-level features. These cover what the text *does* rather than how it sounds: how much it explains its own meaning, how tidy its causal chain is, whether it moves in a straight line.
+
+The structure layer exists because the style layer is not enough. When the researchers ran AI stories through a span-level rewriter built to strip cliché and purple prose, their structure-only classifier still caught them at 93.9% macro-F1, down from 95.5%. The whole style edit bought 1.6 points. Structure alone separates human from AI at 93.2%; style alone manages 85.8%.
 
 The skill also includes a final "obviously AI generated" audit pass and a second rewrite, to catch lingering AI-isms in the first draft.
 
@@ -109,6 +117,28 @@ Rewrites follow a no-fabrication rule: they never add facts, names, dates, or ci
 ### Key Insight from Wikipedia
 
 > "LLMs use statistical algorithms to guess what should come next. The result tends toward the most statistically likely result that applies to the widest variety of cases."
+
+### Key insight from StoryScope
+
+Human writing is not the opposite of AI writing, it is more spread out. Human stories sit in rarer regions of feature space (mean rarity percentile 0.71 vs 0.49) and further from their own centre. Given the same prompt, the human version is the rarest of six 57.8% of the time, against 16.7% by chance. Inverting every AI tendency lands on a different fixed point, which is just as detectable. Vary two or three choices; do not invert all of them.
+
+## 11 Structural Rules
+
+| Rule | Do this | AI | Human |
+|------|---------|----|-------|
+| S1 | Cut the sentence explaining what the one before it meant | States the theme outright 77% | 52% |
+| S2 | Use the source's specifics instead of vague allusion, never invent them | Vague allusion 72% | Named reference 47% vs 24% |
+| S3 | Name a feeling plainly instead of staging it in a body | Embodied metaphor 81% | Plain labels 29% vs 8% |
+| S4 | Cut sensory padding, smell first; stop matching weather to mood | Smell 82%, setting mirrors mood 4.07 | 57%, 3.58 |
+| S5 | Let one thread not resolve | No subplots 79%, resolved by protagonist 69% | 57%, 46% |
+| S6 | Break chronology once | Anachrony 2.31 | 2.58 |
+| S7 | Start at the point; introduce people through speech | External description 52% | 30% |
+| S8 | Address the reader | 7% | 28% |
+| S9 | Leave a judgment genuinely open | Ambivalent 38% | 59% |
+| S10 | Apply two or three of the above, not all nine | Rarity percentile 0.49 | 0.71 |
+| S11 | Check your own model's fingerprint | Claude: flat escalation, uniform voice, epilogues | — |
+
+S3 is worth calling out: it reverses "show, don't tell." That advice was aimed at people who told too much, and models overcorrected. The 42-point gap on embodied emotion is the largest single gap in the study.
 
 ## 33 Patterns Detected (with Before/After Examples)
 
@@ -207,6 +237,7 @@ Rewrites follow a no-fabrication rule: they never add facts, names, dates, or ci
 
 ## Version History
 
+- **3.0.0** - Added a structural layer: 11 rules (S1-S11) from StoryScope (COLM 2026), a structure-before-style pass order, a per-model fingerprint self-check, and `references/narrative-structure.md` with the measured tables. S3 reverses "show, don't tell" on the evidence; S2 defers to the existing no-fabrication rule. No change to the 33 style patterns.
 - **2.9.1** - Improved distribution and portability: removed nonportable frontmatter and tool preapprovals, made global installation the documented default, added package validation, and removed the duplicated long-form example from the runtime prompt. No change to the 33 patterns.
 - **2.9.0** - Added a no-fabrication rule: rewrites may not invent facts, names, dates, or citations not present in the source, and every example that modeled invented specifics was re-cut to use only source information (fixes #187). Replaced paragraph-count parity with an information-over-shape rule, made a user's voice sample outrank the em dash ban, and added invocation modes (pasted text / file / embedded). No change to the 33 patterns.
 - **2.8.3** - Moved the skill version from the unsupported top-level frontmatter key to `metadata.version` for Agent Skills and Claude compatibility. No change to the 33 patterns.

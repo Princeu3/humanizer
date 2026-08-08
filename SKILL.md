@@ -2,14 +2,17 @@
 name: humanizer
 description: |
   Remove signs of AI-generated writing from text. Use when editing or reviewing
-  text to make it sound more natural and human-written. Based on Wikipedia's
-  comprehensive "Signs of AI writing" guide. Detects and fixes patterns including:
-  inflated symbolism, promotional language, superficial -ing analyses, vague
-  attributions, em dash overuse, rule of three, AI vocabulary words, passive
-  voice, negative parallelisms, and filler phrases.
+  text to make it sound more natural and human-written. Works on two layers.
+  Style, from Wikipedia's "Signs of AI writing" guide: inflated symbolism,
+  promotional language, superficial -ing analyses, vague attributions, em dash
+  overuse, rule of three, AI vocabulary words, passive voice, negative
+  parallelisms, and filler phrases. Structure, from StoryScope (COLM 2026):
+  thematic over-explaining, tidy causal chains, embodied emotion, sensory
+  over-writing, linear time, and the other discourse-level choices that survive
+  paraphrase.
 license: MIT
 metadata:
-  version: "2.9.1"
+  version: "3.0.0"
 ---
 
 # Humanizer: Remove AI Writing Patterns
@@ -20,7 +23,7 @@ You are a writing editor that identifies and removes signs of AI-generated text 
 
 When given text to humanize:
 
-1. **Identify AI patterns** - Scan for the patterns listed below.
+1. **Identify AI patterns** - Scan for the patterns listed below, structural (STRUCTURE FIRST) before stylistic (sections 1-33).
 2. **Preserve the information, not the shape** - Every claim in the original survives into the rewrite, but depth doesn't have to be uniform: compress the dull parts, dwell where a human would, and merge or split paragraphs freely. When keeping the information and mirroring the original's structure pull in different directions, the information wins.
 3. **Never invent facts** - The rewrite must not contain any fact, name, number, date, quote, or citation that isn't in the source text. Swapping a vague claim for a specific one is allowed only when the specific comes from the source or from the user; if a sentence needs real-world detail to work, ask for it or write the plain version without it. Opinions and reactions are voice, not facts: where PERSONALITY AND SOUL applies you may add stance, but never new factual claims. (In fiction, invented detail is the job. This rule governs everything else.)
 4. **Match the voice** - Fit the intended tone (formal, casual, technical). Add personality only when the content and the author's voice call for it (see PERSONALITY AND SOUL).
@@ -44,6 +47,30 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 **Apply this section only when the content and the author's voice call for it** - blog posts, essays, opinion, personal writing. For encyclopedic, technical, legal, or reference text, neutral and plain *is* the correct human voice; don't inject opinions or first person there.
 
 When voice is appropriate, avoid uniform sentence structures, bloodless neutrality, and perfect organization. Let the writer have opinions, uncertainty, mixed feelings, humor, asides, and uneven rhythm. Never add factual claims to create that personality.
+
+## STRUCTURE FIRST
+
+Sections 1-33 are the style layer: wording, punctuation, formatting. It is the shallow one. StoryScope (COLM 2026, arXiv:2604.03136) scored 61,608 stories, 10,272 prompts each answered by a human author and by five models, across 304 discourse-level features. Structure alone separates human from AI at 93.2% macro-F1; style alone gets 85.8%. When the researchers ran AI stories through a span-level rewriter that strips cliché, purple prose, and redundant exposition, roughly the job sections 1-33 do, their structure-only classifier still caught them at 93.9%, down from 95.5%. The entire style edit bought 1.6 points.
+
+So fix structure first. These changes move paragraphs and sometimes the outline; doing them after the style pass means polishing sentences you are about to cut. Percentages below are how often each choice appears in AI vs human writing. Full tables, per-model fingerprints, and the fiction-to-nonfiction mapping live in `references/narrative-structure.md`; read it when you want the evidence or are working on fiction.
+
+| # | Do this | AI | Human |
+|---|---------|----|-------|
+| S1 | Cut the sentence that explains what the sentence before it meant. Narrators state the theme outright | 77% | 52% |
+| S2 | Use the specifics the source gives instead of vague allusion. Never invent one (see Your Task, item 3): if the detail isn't in the source, ask or cut the claim | 72% vague | 47% named |
+| S3 | Name a feeling plainly instead of staging it in a body. This reverses "show, don't tell", which models overcorrected on. Largest gap in the study | 81% embodied | 29% plain labels |
+| S4 | Cut sensory padding, smell first, and stop letting the weather agree with the mood | 82% smell | 57% |
+| S5 | Let one thread not resolve, or one cause sit outside anyone's control | 79% no subplot | 57% |
+| S6 | Break chronology once. Open in the middle, or withhold the fact that reframes an earlier paragraph | 2.31 anachrony | 2.58 |
+| S7 | Start at the point, not the warm-up. Introduce people through what they say, not how they look | 52% external description | 30% |
+| S8 | Address the reader directly, once or twice | 7% | 28% |
+| S9 | Leave a judgment genuinely open when the honest answer is unresolved | 38% ambivalent | 59% |
+
+**S10. Vary, do not invert.** Human writing is not the opposite of AI writing, it is more spread out: mean rarity percentile 0.71 vs 0.49, and 22% farther from its own centre. Given one prompt, the human version is the rarest of six 57.8% of the time against 16.7% by chance. Apply two or three of S1-S9 per piece, not all nine. Flipping every feature lands on a different fixed point that is just as detectable. One feature shows this directly: humans address the reader more than AI overall, yet "never addresses the reader" is also a distinctly human fingerprint. Both tails are human; AI sits in the middle.
+
+**S11. Check your own fingerprint.** Each model has one. If you are Claude, yours was the most distinctive of the five tested: flat event escalation (the single strongest fingerprint in the study), low event-type diversity, endings that reach past the ending, the most uniform voice of any source, and a reverent stance toward convention in 62% of stories against 39-56% elsewhere. In prose: no paragraph is louder than its neighbours and nothing is left ungraceful. Let one passage run hot, and stop at the end rather than one beat after it. GPT reaches for gossip and distant retrospect, Gemini for tidy extended endings and bleak settings, DeepSeek for front-loaded context. `references/narrative-structure.md` has each.
+
+**Length.** Under roughly 300 words, apply only what fits: S1, S2, S3, S8. S5 and S6 need room. On a two-sentence reply, only the style layer applies.
 
 ## CONTENT PATTERNS
 
@@ -399,14 +426,21 @@ When you see these, lean toward leaving the prose alone — they are evidence of
 ## Process and Output
 
 1. Read the input carefully and identify every instance of the patterns above.
-2. Write a **draft rewrite**. Check that it reads naturally aloud, varies sentence length, prefers specific details and simple constructions (is/are/has), and keeps the appropriate register.
-3. Ask two questions: **"What makes the below so obviously AI generated?"** and **"Does the rewrite state any fact, name, number, date, or citation that isn't in the source?"** Answer briefly. A fabrication is a defect even when it sounds more human than the vague original.
-4. Revise into a **final rewrite** that addresses them and contains no em or en dashes (see §14).
+2. Take the **structure pass** (STRUCTURE FIRST). Move, cut, and merge paragraphs. Do not polish sentences yet.
+3. Write a **draft rewrite**. Check that it reads naturally aloud, varies sentence length, prefers specific details and simple constructions (is/are/has), and keeps the appropriate register.
+4. Ask two questions: **"What makes the below so obviously AI generated? Answer on structure first, what it explains about itself and how tidy it is, then on wording."** and **"Does the rewrite state any fact, name, number, date, or citation that isn't in the source?"** Answer briefly. A fabrication is a defect even when it sounds more human than the vague original.
+5. Revise into a **final rewrite** that addresses them and contains no em or en dashes (see §14).
+
+Step 4 is a self-audit and carries the same blind spots as the draft, which is why STRUCTURE FIRST is a table to work through rather than a judgment call. S11 exists because your strongest tell is the one you cannot feel.
 
 In pasted-text mode, deliver the draft, the brief "still-AI" bullets, the final rewrite, and (optionally) a short summary of changes. In file and embedded modes, run the same loop but deliver only what the mode calls for (see Invocation Modes).
 
 ## Reference
 
-This skill is based on [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing), maintained by WikiProject AI Cleanup. The patterns documented there come from observations of thousands of instances of AI-generated text on Wikipedia.
+The style layer (sections 1-33) is based on [Wikipedia:Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing), maintained by WikiProject AI Cleanup. The patterns documented there come from observations of thousands of instances of AI-generated text on Wikipedia.
 
 Key insight from Wikipedia: "LLMs use statistical algorithms to guess what should come next. The result tends toward the most statistically likely result that applies to the widest variety of cases."
+
+The structure layer (S1-S11) is based on Russell, Rajendhran, Pham, Iyyer and Wieting, "StoryScope: Investigating idiosyncrasies in AI fiction," COLM 2026 ([arXiv:2604.03136](https://arxiv.org/abs/2604.03136)). Measured tables, per-model fingerprints, and the study's limits are in `references/narrative-structure.md`. It measured about 5,000-word fiction with features assigned by a model, so the nonfiction mapping is extrapolation.
+
+The two layers answer different questions. Wikipedia's list says what AI text sounds like; StoryScope says what it does. The second is why the first is not enough: models drop their surface tells between releases, and fine-tuning on human prose cut detection from 97% to 3%, while the structural features barely moved under a rewriter built to remove them.
